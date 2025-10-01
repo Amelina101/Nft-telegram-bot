@@ -13,7 +13,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     
     # Добавляем админ кнопку если это админ
-    if user.id == 6540509823:  # ЗАМЕНИТЕ НА ВАШ ID
+    if user.id == Id: 6540509823:  # ЗАМЕНИТЕ НА ВАШ ID
         keyboard.append([InlineKeyboardButton("🛠️ Админ панель", callback_data="admin")])
     
     await update.message.reply_text(
