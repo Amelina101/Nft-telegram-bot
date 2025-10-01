@@ -1,10 +1,18 @@
 import os
+import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
-BOT_TOKEN = os.getenv('BOT_TOKEN', 'your_bot_token_here')
+# Настройка логирования
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+ADMIN_ID = 6540509823  # ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ ID
+
+async def start(update: Update, context: CallbackContext):
     user = update.effective_user
     
     keyboard = [
@@ -13,7 +21,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     
     # Добавляем админ кнопку если это админ
-    if user.id == 6540509823:  # ЗАМЕНИТЕ НА ВАШ ID
+    if user.id == ADMIN_ID:
         keyboard.append([InlineKeyboardButton("🛠️ Админ панель", callback_data="admin")])
     
     await update.message.reply_text(
@@ -22,7 +30,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin_panel(update: Update, context: CallbackContext):
     query = update.callback_query
     
     keyboard = [
@@ -41,7 +49,7 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode='Markdown'
     )
 
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     
     if query.data == "admin":
@@ -52,13 +60,27 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.edit_text("⚙️ Функция в разработке...")
 
 def main():
-    app = Application.builder().token(BOT_TOKEN).build()
+    if not BOT_TOKEN:
+        print("❌ ОШИБКА: BOT_TOKEN не найден!")
+        return
     
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
+    # Создаем updater и передаем ему токен бота
+    updater = Updater(BOT_TOKEN)
     
-    print("🤖 Бот запущен!")
-    app.run_polling()
+    # Получаем диспетчер для регистрации обработчиков
+    dispatcher = updater.dispatcher
+    
+    # Регистрируем обработчики команд
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CallbackQueryHandler(button_handler))
+    
+    # Запускаем бота
+    print("🤖 Бот запускается...")
+    updater.start_polling()
+    print("✅ Бот успешно запущен!")
+    
+    # Запускаем бота до тех пор, пока пользователь не остановит его
+    updater.idle()
 
 if __name__ == "__main__":
     main()
