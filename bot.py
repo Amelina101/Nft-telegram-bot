@@ -1,7 +1,7 @@
 import os
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
 # Настройка логирования
 logging.basicConfig(
@@ -10,9 +10,9 @@ logging.basicConfig(
 )
 
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-ADMIN_ID = 6540509823  # ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ ID
+ADMIN_ID = 123456789  # ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ ID
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def start(update: Update, context: CallbackContext):
     user = update.effective_user
     
     keyboard = [
@@ -24,15 +24,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user.id == ADMIN_ID:
         keyboard.append([InlineKeyboardButton("🛠️ Админ панель", callback_data="admin")])
     
-    await update.message.reply_text(
+    update.message.reply_text(
         f"👋 Привет, {user.first_name}!\n\n"
         "Добро пожаловать в бота для сделок с NFT!",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def admin_panel(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()
+    query.answer()
     
     keyboard = [
         [InlineKeyboardButton("📊 Статистика", callback_data="stats")],
@@ -41,8 +41,8 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🔙 Главное меню", callback_data="main_menu")]
     ]
     
-    await query.message.edit_text(
-        "🛠️ **Панель администратора**\n\n"
+    query.edit_message_text(
+        "🛠️ *Панель администратора*\n\n"
         "📊 Ваша статистика:\n"
         "• Сделок: 1423\n"
         "• Рейтинг: 5.0/5 ⭐⭐⭐⭐⭐\n"
@@ -52,39 +52,39 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode='Markdown'
     )
 
-async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def admin_stats(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()
+    query.answer()
     
     stats_text = (
-        "📊 **Статистика системы**\n\n"
+        "📊 *Статистика системы*\n\n"
         "👥 Пользователей: `15`\n"
         "🎁 NFT товаров: `7`\n"
         "💼 Активных сделок: `3`\n"
-        "💎 Ваш статус: **АДМИНИСТРАТОР**\n\n"
+        "💎 Ваш статус: *АДМИНИСТРАТОР*\n\n"
         "🛠️ Управление через админ панель"
     )
     
     keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="admin_panel")]]
-    await query.message.edit_text(stats_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+    query.edit_message_text(stats_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()
+    query.answer()
     
     if query.data == "admin":
-        await admin_panel(update, context)
+        admin_panel(update, context)
     elif query.data == "admin_panel":
-        await admin_panel(update, context)
+        admin_panel(update, context)
     elif query.data == "stats":
-        await admin_stats(update, context)
+        admin_stats(update, context)
     elif query.data == "main_menu":
-        await start(update, context)
+        start(update, context)
     else:
-        await query.message.edit_text("⚙️ Функция в разработке...")
+        query.edit_message_text("⚙️ Функция в разработке...")
 
-async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("✅ Тестовая команда работает!")
+def test_command(update: Update, context: CallbackContext):
+    update.message.reply_text("✅ Тестовая команда работает!")
 
 def main():
     if not BOT_TOKEN:
@@ -92,21 +92,30 @@ def main():
         print("✅ Убедитесь что переменная BOT_TOKEN установлена в Render")
         return
     
-    # Создаем Application
-    application = Application.builder().token(BOT_TOKEN).build()
+    # Создаем Updater
+    updater = Updater(BOT_TOKEN, use_context=True)
+    
+    # Получаем диспетчер
+    dp = updater.dispatcher
     
     # Регистрируем обработчики
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("test", test_command))
-    application.add_handler(CallbackQueryHandler(button_handler))
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("test", test_command))
+    dp.add_handler(CallbackQueryHandler(button_handler))
     
     # Запускаем бота
     print("🤖 Бот запускается...")
     print(f"✅ Токен получен: {BOT_TOKEN[:10]}...")
-    print("✅ Обработчики зарегистрированы")
     
-    application.run_polling()
+    updater.start_polling()
     print("✅ Бот успешно запущен!")
+    
+    # Бот работает до принудительной остановки
+    updater.idle()
 
 if __name__ == "__main__":
     main()
+
+    
+    
+    
