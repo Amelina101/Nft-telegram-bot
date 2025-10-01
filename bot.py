@@ -42,14 +42,13 @@ def admin_panel(update: Update, context: CallbackContext):
     ]
     
     query.edit_message_text(
-        "🛠️ *Панель администратора*\n\n"
+        "🛠️ Панель администратора\n\n"
         "📊 Ваша статистика:\n"
         "• Сделок: 1423\n"
         "• Рейтинг: 5.0/5 ⭐⭐⭐⭐⭐\n"
         "💎 Баланс: Безлимитный\n\n"
         "Выберите действие:",
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode='Markdown'
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 def admin_stats(update: Update, context: CallbackContext):
@@ -57,16 +56,16 @@ def admin_stats(update: Update, context: CallbackContext):
     query.answer()
     
     stats_text = (
-        "📊 *Статистика системы*\n\n"
-        "👥 Пользователей: `15`\n"
-        "🎁 NFT товаров: `7`\n"
-        "💼 Активных сделок: `3`\n"
-        "💎 Ваш статус: *АДМИНИСТРАТОР*\n\n"
+        "📊 Статистика системы\n\n"
+        "👥 Пользователей: 15\n"
+        "🎁 NFT товаров: 7\n"
+        "💼 Активных сделок: 3\n"
+        "💎 Ваш статус: АДМИНИСТРАТОР\n\n"
         "🛠️ Управление через админ панель"
     )
     
     keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="admin_panel")]]
-    query.edit_message_text(stats_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+    query.edit_message_text(stats_text, reply_markup=InlineKeyboardMarkup(keyboard))
 
 def button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -86,36 +85,51 @@ def button_handler(update: Update, context: CallbackContext):
 def test_command(update: Update, context: CallbackContext):
     update.message.reply_text("✅ Тестовая команда работает!")
 
+def help_command(update: Update, context: CallbackContext):
+    update.message.reply_text(
+        "📖 Доступные команды:\n"
+        "/start - Главное меню\n"
+        "/test - Тест бота\n"
+        "/help - Помощь"
+    )
+
 def main():
     if not BOT_TOKEN:
         print("❌ ОШИБКА: BOT_TOKEN не найден!")
         print("✅ Убедитесь что переменная BOT_TOKEN установлена в Render")
         return
     
-    # Создаем Updater
-    updater = Updater(BOT_TOKEN, use_context=True)
-    
-    # Получаем диспетчер
-    dp = updater.dispatcher
-    
-    # Регистрируем обработчики
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("test", test_command))
-    dp.add_handler(CallbackQueryHandler(button_handler))
-    
-    # Запускаем бота
-    print("🤖 Бот запускается...")
-    print(f"✅ Токен получен: {BOT_TOKEN[:10]}...")
-    
-    updater.start_polling()
-    print("✅ Бот успешно запущен!")
-    
-    # Бот работает до принудительной остановки
-    updater.idle()
+    try:
+        # Создаем Updater
+        updater = Updater(BOT_TOKEN, use_context=True)
+        
+        # Получаем диспетчер
+        dp = updater.dispatcher
+        
+        # Регистрируем обработчики
+        dp.add_handler(CommandHandler("start", start))
+        dp.add_handler(CommandHandler("test", test_command))
+        dp.add_handler(CommandHandler("help", help_command))
+        dp.add_handler(CallbackQueryHandler(button_handler))
+        
+        # Запускаем бота
+        print("🤖 Бот запускается...")
+        print(f"✅ Токен получен: {BOT_TOKEN[:10]}...")
+        
+        updater.start_polling()
+        print("✅ Бот успешно запущен!")
+        
+        # Бот работает до принудительной остановки
+        updater.idle()
+        
+    except Exception as e:
+        print(f"❌ Ошибка при запуске бота: {e}")
+        print("🔧 Проверьте токен и настройки")
 
 if __name__ == "__main__":
     main()
 
     
-    
+
+
     
