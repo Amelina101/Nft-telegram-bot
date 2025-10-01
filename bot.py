@@ -1,7 +1,7 @@
 import os
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # Настройка логирования
 logging.basicConfig(
@@ -12,7 +12,7 @@ logging.basicConfig(
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 ADMIN_ID = 6540509823  # ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ ID
 
-async def start(update: Update, context: CallbackContext):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     
     keyboard = [
@@ -30,13 +30,15 @@ async def start(update: Update, context: CallbackContext):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-async def admin_panel(update: Update, context: CallbackContext):
+async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    await query.answer()
     
     keyboard = [
         [InlineKeyboardButton("📊 Статистика", callback_data="stats")],
         [InlineKeyboardButton("🎁 Управление NFT", callback_data="manage_nft")],
-        [InlineKeyboardButton("🔙 Назад", callback_data="back")]
+        [InlineKeyboardButton("👥 Пользователи", callback_data="admin_users")],
+        [InlineKeyboardButton("🔙 Главное меню", callback_data="main_menu")]
     ]
     
     await query.message.edit_text(
@@ -44,43 +46,67 @@ async def admin_panel(update: Update, context: CallbackContext):
         "📊 Ваша статистика:\n"
         "• Сделок: 1423\n"
         "• Рейтинг: 5.0/5 ⭐⭐⭐⭐⭐\n"
-        "💎 Баланс: Безлимитный",
+        "💎 Баланс: Безлимитный\n\n"
+        "Выберите действие:",
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
 
-async def button_handler(update: Update, context: CallbackContext):
+async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    await query.answer()
+    
+    stats_text = (
+        "📊 **Статистика системы**\n\n"
+        "👥 Пользователей: `15`\n"
+        "🎁 NFT товаров: `7`\n"
+        "💼 Активных сделок: `3`\n"
+        "💎 Ваш статус: **АДМИНИСТРАТОР**\n\n"
+        "🛠️ Управление через админ панель"
+    )
+    
+    keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="admin_panel")]]
+    await query.message.edit_text(stats_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
     
     if query.data == "admin":
         await admin_panel(update, context)
-    elif query.data == "back":
+    elif query.data == "admin_panel":
+        await admin_panel(update, context)
+    elif query.data == "stats":
+        await admin_stats(update, context)
+    elif query.data == "main_menu":
         await start(update, context)
     else:
         await query.message.edit_text("⚙️ Функция в разработке...")
 
+async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("✅ Тестовая команда работает!")
+
 def main():
     if not BOT_TOKEN:
         print("❌ ОШИБКА: BOT_TOKEN не найден!")
+        print("✅ Убедитесь что переменная BOT_TOKEN установлена в Render")
         return
     
-    # Создаем updater и передаем ему токен бота
-    updater = Updater(BOT_TOKEN)
+    # Создаем Application
+    application = Application.builder().token(BOT_TOKEN).build()
     
-    # Получаем диспетчер для регистрации обработчиков
-    dispatcher = updater.dispatcher
-    
-    # Регистрируем обработчики команд
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CallbackQueryHandler(button_handler))
+    # Регистрируем обработчики
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("test", test_command))
+    application.add_handler(CallbackQueryHandler(button_handler))
     
     # Запускаем бота
     print("🤖 Бот запускается...")
-    updater.start_polling()
-    print("✅ Бот успешно запущен!")
+    print(f"✅ Токен получен: {BOT_TOKEN[:10]}...")
+    print("✅ Обработчики зарегистрированы")
     
-    # Запускаем бота до тех пор, пока пользователь не остановит его
-    updater.idle()
+    application.run_polling()
+    print("✅ Бот успешно запущен!")
 
 if __name__ == "__main__":
     main()
