@@ -10,7 +10,7 @@ logging.basicConfig(
 )
 
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-ADMIN_ID = 123456789  # ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ ID
+ADMIN_ID = 6540509823  # ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ ID
 
 def start(update: Update, context: CallbackContext):
     user = update.effective_user
